@@ -24,7 +24,16 @@ Invite the second owner to the database. Both of you now log from the Notion mob
 
 ## 3. Connect Claude
 
-Connect the Notion MCP to Claude Code and give it access to the database. Then run Claude from this folder so `CLAUDE.md` loads. The `log` skill writes new rows; `vet-visit-prep` reads recent rows. For advice, just chat: Claude reads the database for context.
+Give Claude Code access to the database through the Notion MCP server, then install the skills.
+
+1. **Add the Notion MCP server.** The simplest path is Notion's hosted server, which authorizes in the browser:
+   ```
+   claude mcp add --transport http notion https://mcp.notion.com/mcp
+   ```
+   Then run `/mcp` inside Claude Code and complete the browser sign-in. (Alternative: self-host — create an internal integration at notion.so/my-integrations, copy its token, and configure the Notion MCP server with it.)
+2. **Grant access to the database — easy to miss.** A fresh integration sees nothing until you connect the page to it. Open the database in Notion → **•••** menu → **Connections** → add your integration. Without this, Claude gets an empty result and can't read or write.
+3. **Install the skills** where Claude Code looks for them: `mkdir -p .claude/skills && cp -r skills/* .claude/skills/` (or `~/.claude/skills/` to make them available in every project).
+4. **Run Claude from this folder** so `CLAUDE.md` loads. The `log` skill writes new rows; `vet-visit-prep` reads recent rows. For advice, just chat: Claude reads the database for context.
 
 ## 4. Privacy
 

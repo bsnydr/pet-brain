@@ -15,9 +15,10 @@ The advice chat and the logging are separate on purpose: logging should be a fiv
 
 ## Setup
 
-1. Create the Notion database (properties and a profile template in [`notion-setup.md`](notion-setup.md)). Share it with your partner.
-2. Connect the Notion MCP to Claude Code so a session can read and write the database.
-3. Run Claude from inside this folder so `CLAUDE.md` auto-loads. Add updates with the `log` skill; prep an appointment with `vet-visit-prep`.
+1. **Create the Notion database** (properties and a profile template in [`notion-setup.md`](notion-setup.md)). Share it with your partner.
+2. **Connect the Notion MCP** so a Claude session can read and write the database — full steps, including the easy-to-miss "share the database with the integration", are in [`notion-setup.md`](notion-setup.md#3-connect-claude).
+3. **Install the skills.** Claude Code only auto-discovers skills under a `.claude/skills/` directory, so copy them there once: `mkdir -p .claude/skills && cp -r skills/* .claude/skills/` (use `~/.claude/skills/` instead to make them available in every project). `.claude/` is gitignored, so this stays local.
+4. **Run Claude from inside this folder** so `CLAUDE.md` auto-loads. Add updates with the `log` skill; prep an appointment with `vet-visit-prep`.
 
 No Notion? The same structure works as local markdown files (one per category). See the example in [`examples/`](examples).
 
