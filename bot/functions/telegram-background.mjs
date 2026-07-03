@@ -105,6 +105,7 @@ export default async (req) => {
     GITHUB_REPO,
     GITHUB_BRANCH = "main",
     ALLOWED_CHAT_ID,
+    ALLOWED_USER_IDS,
     ANTHROPIC_API_KEY,
     ANTHROPIC_MODEL = DEFAULT_MODEL,
   } = env;
@@ -124,7 +125,13 @@ export default async (req) => {
 
   const msg = update.message;
   if (!msg) return new Response("ok", { status: 200 });
-  if (String(msg.chat?.id) !== String(ALLOWED_CHAT_ID)) return new Response("ok", { status: 200 });
+  // Accept the allowed group, OR a direct (private) chat from an allowlisted user id. Everyone else
+  // is silently ignored — the bot is public but only acts for the owners. Set ALLOWED_USER_IDS to a
+  // comma-separated list of your own Telegram user ids (get them from a "what's my id" bot).
+  const allowedUsers = (ALLOWED_USER_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const fromGroup = String(msg.chat?.id) === String(ALLOWED_CHAT_ID);
+  const fromAllowedDM = msg.chat?.type === "private" && allowedUsers.includes(String(msg.from?.id));
+  if (!fromGroup && !fromAllowedDM) return new Response("ok", { status: 200 });
   if (SERVICE_FIELDS.some((f) => f in msg)) return new Response("ok", { status: 200 });
 
   const who = oneLine(msg.from?.first_name || "Unknown", 64).replace(/[()]/g, "") || "Unknown";

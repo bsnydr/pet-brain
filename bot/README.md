@@ -38,6 +38,7 @@ Telegram group ──POST /hook──▶ background fn ──(redacted records +
 | `GITHUB_TOKEN` | fine-grained PAT scoped to your records repo, **Contents: read/write** |
 | `GITHUB_REPO` | `you/your-repo` · `GITHUB_BRANCH` | `main` (optional) |
 | `ALLOWED_CHAT_ID` | your group's chat id (`-100…` for a supergroup) — every other chat is ignored |
+| `ALLOWED_USER_IDS` | *(optional)* comma-separated Telegram user ids allowed to DM the bot 1:1, e.g. `111,222` — so owners can also message it privately, not just in the group. Everyone else is still ignored. |
 | `ANTHROPIC_API_KEY` | Anthropic key for the AI brain · `ANTHROPIC_MODEL` | optional, defaults to `claude-sonnet-5` |
 
 Set one: `netlify env:set NAME value` from this `bot/` dir. Leading-dash values (the chat id) need
