@@ -1,0 +1,7 @@
+{
+  "name": "pet-brain-telegram-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Telegram → repo webhook for the pet-brain dog log. No dependencies — uses built-in fetch/Buffer."
+}
