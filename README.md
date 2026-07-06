@@ -12,11 +12,14 @@ bot** over a **markdown repo**. This is that setup, generalized and stripped of 
 
 Three pieces, kept deliberately separate:
 
-1. **The interface — a Telegram group + a bot.** Text anything from your phone; for each message an LLM
-   decides whether it's worth saving and whether it's a question to answer. Observations get distilled
-   and saved; questions get answered *grounded in your dog's records*; chatter is ignored. One-word logs
-   ("pee", "ate", "vomited") work, a 👍 means it saved, and both owners share one thread. No app, no
-   forms, no commands. (Code + setup: [`bot/`](bot).)
+1. **The interface — a Telegram group + a bot (this is the product).** Text anything from your phone.
+   Each message runs a **two-pass ladder**: a cheap model triages *every* message (save it? answer it?
+   route it?), and only a real health/behaviour question escalates to a stronger model that can **pull
+   the full relevant record on demand and search the web** (with citations) before answering. Observations
+   get distilled and saved; questions get answered *grounded in your dog's records*; chatter is ignored.
+   One-word logs ("pee", "ate", "vomited") work, a 👍 means it saved, and both owners share one thread.
+   No app, no forms, no commands. It never gives a medicine dose — that's the vet's job. (Code + setup:
+   [`bot/`](bot).)
 2. **The store — a git repo of markdown.** A profile, a vet log, a behaviour journal, a to-do list, and a
    curated **`bot-reference.md`** the bot reads in full. Plain text, version-controlled, yours — no
    lock-in, and you can read your whole "database" in a text editor. (Optionally mirrored to a Notion

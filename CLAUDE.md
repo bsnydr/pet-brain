@@ -38,12 +38,14 @@ below the header:
 3. **Clear filed lines** from `telegram-inbox.md` (keep the header), then commit.
 
 ## Keep `bot-reference.md` current
-The bot answers **only** from the files it's fed — chiefly `bot-reference.md` (read in full) plus recent
-journal. When the journal or your behaviour notes gain a **material new pattern** (a new signal, a
-changed routine, a trigger, what now works), **re-distill it into `bot-reference.md`** so the bot's
-answers stay grounded — otherwise it falls back to generic advice. Keep it tight and dog-specific
-(signals + what-to-do), not a copy of the source files. A monthly refresh, or after any big change, is
-about right.
+`bot-reference.md` is the bot's front line — read (nearly) in full on every message. For a real
+health/behaviour question the bot *also* pulls the full relevant record on demand (`fetch_repo_file`) and
+can `web_search` an outside fact; that trio — distilled-always + full-on-demand + web — is the whole
+retrieval model (no database/RAG). So when the journal or your behaviour notes gain a **material new
+pattern** (a new signal, a changed routine, a trigger, what now works), **re-distill it into
+`bot-reference.md`** — it's the highest-leverage way to keep answers grounded rather than generic. Keep
+it tight and dog-specific (signals + what-to-do), not a copy of the source files. A monthly refresh, or
+after any big change, is about right.
 
 ## Operating rules
 - **Format:** dense, direct, lead with the answer, minimal caveats.

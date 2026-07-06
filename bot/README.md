@@ -1,17 +1,30 @@
 # The Telegram bot
 
 A Netlify **background function** that turns a private Telegram group into the messaging interface for
-your dog's markdown "brain". Text the group; for each message an LLM decides whether it's worth saving
-and whether it's a question to answer:
+your dog's markdown "brain". Text the group; each message runs through a **two-pass model ladder**:
 
-- **Observation** → distilled to one line and appended to `../telegram-inbox.md` (a Claude session, or
-  the weekly tidy, files it into the records), and the bot reacts 👍.
-- **Question** → answered in-chat, grounded in the dog's records.
+- **Pass 1 — triage (every message, a cheap model like `claude-haiku-4-5`).** Decides whether it's worth
+  saving (distils one line), whether it's a question to answer, and two routing flags — `needs_expertise`
+  (a real health/behaviour/training question) and `needs_web` (needs a current external fact). It also
+  tags the saved line with a filing hint. Most messages stop here — cheaper than sending every message
+  to a big model.
+- **Pass 2 — expert reply (only when it's a real health/behaviour question or one needing a live web
+  fact).** A stronger model (`claude-opus-4-8` for expertise, `claude-sonnet-5` for web-only) running a
+  **tool loop**: `fetch_repo_file` pulls a deeper record on demand (behaviour notes, the full journal),
+  and `web_search` checks a current external fact with citations. Everything else uses Pass 1's reply.
+
+Per-message outcome:
+
+- **Observation** → distilled to one line + a filing hint (`[→ todo]` / `[→ vet-log due YYYY-MM-DD]`) and
+  appended to `../telegram-inbox.md` (a Claude session, or the weekly tidy, files it into the records),
+  and the bot reacts 👍. The tag is a hint — the bot never writes directly to the records (the inbox is
+  the quarantine).
+- **Question** → answered in-chat, grounded in the dog's records (and, for the hard ones, a cited source).
 - **Chatter / test / side-talk** → ignored.
 
 Media without text is captured as a placeholder; forwarded messages are tagged `[forwarded]` and
 captured raw (never treated as an owner-asserted fact); if the AI is unavailable the raw message is
-captured so nothing is lost.
+captured so nothing is lost. A guaranteed floor reply means a real question never meets silence.
 
 - **Function:** [`functions/telegram-background.mjs`](functions/telegram-background.mjs) — zero
   dependencies (built-in `fetch`/`Buffer`).
@@ -22,11 +35,13 @@ captured so nothing is lost.
 ## How it works
 
 ```
-Telegram group ──POST /hook──▶ background fn ──(redacted records + message)──▶ Claude Messages API
-                   │ 202 now                     │
-                   │                    decision: save? / reply?
-                   ▼                              ├─ save  → telegram-inbox.md (GitHub API) + 👍
-              (the owners)  ◀── reply / 👍 ───────┴─ reply → sendMessage
+Telegram group ──POST /hook──▶ background fn ──(redacted records + message)──▶ Pass 1 · cheap triage
+                   │ 202 now                     │                              save? reply? route?
+                   │                             ├─ save  → telegram-inbox.md (GitHub API) + 👍
+                   │                             │           (+ filing hint [→ todo] / [→ vet-log …])
+                   │                             └─ reply ─┬─ trivial → Pass 1's answer
+                   ▼                                       └─ expertise/web → Pass 2 · stronger model
+              (the owners)  ◀──── reply / 👍 ──────────────────  tool loop: fetch_repo_file · web_search
 ```
 
 ## Environment variables (set in Netlify — never commit these)
@@ -39,7 +54,8 @@ Telegram group ──POST /hook──▶ background fn ──(redacted records +
 | `GITHUB_REPO` | `you/your-repo` · `GITHUB_BRANCH` | `main` (optional) |
 | `ALLOWED_CHAT_ID` | your group's chat id (`-100…` for a supergroup) — every other chat is ignored |
 | `ALLOWED_USER_IDS` | *(optional)* comma-separated Telegram user ids allowed to DM the bot 1:1, e.g. `111,222` — so owners can also message it privately, not just in the group. Everyone else is still ignored. |
-| `ANTHROPIC_API_KEY` | Anthropic key for the AI brain · `ANTHROPIC_MODEL` | optional, defaults to `claude-sonnet-5` |
+| `ANTHROPIC_API_KEY` | Anthropic key for the AI brain (give it its **own** key with a monthly spend cap so a loop can't run up a bill) |
+| `ANTHROPIC_MODEL_TRIAGE` / `_REPLY` / `_EXPERT` | *(optional)* override the ladder's models; default to `claude-haiku-4-5` / `claude-sonnet-5` / `claude-opus-4-8` |
 
 Set one: `netlify env:set NAME value` from this `bot/` dir. Leading-dash values (the chat id) need
 `netlify env:set ALLOWED_CHAT_ID -- -100…`.
@@ -88,6 +104,10 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"   # url ends in /hook,
 - **Set the timezone** in `formatStamp` (defaults to UTC).
 - **Inbox > 1 MB** would break the append (GitHub Contents API limit). Unlikely if sessions clear it
   regularly; prune the inbox if captures ever pile up.
-- **Privacy:** `redact()` strips identifier numbers and `stripSections()` drops the profile's
-  owner/contact/financial sections before anything is sent to the model. Redaction is best-effort —
-  adapt the patterns to your country's ID formats, and never text raw secrets into the group.
+- **Privacy:** `redact()` strips identifier numbers (and `+`-prefixed phone numbers) and
+  `stripSections()` drops the profile's owner/contact/financial sections before anything is sent to the
+  model — including files Pass 2 pulls on demand. `web_search` queries are prompt-guarded to never carry
+  a name/contact. Redaction is best-effort — adapt the patterns to your country's ID formats, and never
+  text raw secrets into the group.
+- **`web_search` needs a capable model.** `web_search_20260209` (used in Pass 2) is a server-side tool
+  on recent models; on older models use the basic `web_search_20250305` variant, or drop the tool.
