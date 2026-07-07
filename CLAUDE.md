@@ -66,6 +66,14 @@ after any big change, is about right.
   is best-effort, so don't rely on it as the only layer.
 
 ## Maintenance
-Monthly, or when the records feel messy: process the inbox, merge duplicates, fix stale facts, archive
-old entries, re-distill `bot-reference.md`, and keep this index honest. Treat the memory like code:
-review and prune. This is a good thing to schedule so it runs itself.
+When the records feel messy: process the inbox, merge duplicates, fix stale facts, archive old
+entries, re-distill `bot-reference.md`, and keep this index honest. Treat the memory like code:
+review and prune. Schedule this so it runs itself.
+
+**Automation — two scheduled tasks (run when a Claude session is open):**
+- **Weekly tidy** — e.g. Mondays ~08:00: files the Telegram captures, prunes and refreshes the
+  records + `bot-reference.md`, commits. *Data hygiene — keeps the memory fresh.*
+- **Monthly review** — e.g. the 1st ~08:00: a product review that rethinks the architecture, bot,
+  and roadmap from real usage and logs prioritised recommendations (tagged *safe to auto-apply* vs
+  *needs an owner's decision*) to a `product-reviews.md` record. *Strategy — the counterpart to the
+  weekly tidy: the weekly pass keeps the data clean, the monthly pass keeps the product improving.*
