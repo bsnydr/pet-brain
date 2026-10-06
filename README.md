@@ -14,7 +14,7 @@ Three pieces, kept deliberately separate:
 
 1. **The interface — a Telegram group + a bot (this is the product).** Text anything from your phone.
    Each message runs a **two-pass ladder**: a cheap model triages *every* message (save it? answer it?
-   route it?), and only a real health/behaviour question escalates to a stronger model that can **pull
+   route it?), and every real question uses a stronger model that can **pull
    the full relevant record on demand and search the web** (with citations) before answering. Observations
    get distilled and saved; questions get answered *grounded in your dog's records*; chatter is ignored.
    One-word logs ("pee", "ate", "vomited") work, a 👍 means it saved, and both owners share one thread.
@@ -24,10 +24,10 @@ Three pieces, kept deliberately separate:
    curated **`bot-reference.md`** the bot reads in full. Plain text, version-controlled, yours — no
    lock-in, and you can read your whole "database" in a text editor. (Optionally mirrored to a Notion
    database as a shareable phone surface — see [`notion-setup.md`](notion-setup.md).)
-3. **The brain — a `CLAUDE.md` + skills.** The bot captures each observation into an inbox; a Claude
-   session (or a scheduled weekly tidy) files those into the right records, keeps the reference current,
-   and handles deeper questions. The bot runs the moment-to-moment; Claude sessions do the heavier
-   lifting.
+3. **The brain — records, an operating protocol and restricted maintenance.** The bot captures to an
+   inbox. A filing session or an OpenAI runner with allowlisted file tools updates the records and
+   reference. Corrections stay traceable; the bot states which changes still await filing. Public
+   workflow templates are manual only; enable schedules in your private clone.
 
 **Why capture and filing are separate:** logging should be a five-second text, but filing and curation
 are a *reviewing* step — it's what stops a bad line from silently becoming "truth" the bot later answers
@@ -51,7 +51,7 @@ notion-setup.md      optional: mirror the records to a shareable Notion database
    `journal.md`, `todos.md`, and `bot-reference.md`. Start from [`examples/`](examples) and fill in your
    own; keep identifiers out (see Privacy).
 2. **The bot.** Follow [`bot/README.md`](bot/README.md) — create the bot via BotFather, make a group,
-   scope a GitHub token to your records repo, add an Anthropic key, deploy to Netlify, register the
+   scope a GitHub token to your records repo, add a funded OpenAI key, deploy to Netlify, register the
    webhook. ~20 minutes.
 3. **The brain.** Run Claude from inside the repo so `CLAUDE.md` auto-loads. Periodically process the
    inbox and tidy the records (the `log` and `vet-visit-prep` skills help) — or schedule that weekly so
@@ -71,7 +71,7 @@ in the repo. `CLAUDE.md` enforces the rule; this repo ships only synthetic examp
 - It's a bespoke, zero-dependency function plus a folder of markdown you can read end to end — no
   database, no lock-in, portable anywhere Node runs.
 - It's deliberately **not** a general autonomous agent: the bot only *captures and answers* and has no
-  shell/file/build powers. The heavier work stays in supervised Claude sessions. That boundary is the
+  shell/file/build powers. Maintenance uses restricted file tools or a supervised coding session. That boundary is the
   point — it keeps the whole thing auditable and safe to run always-on.
 
 ## License

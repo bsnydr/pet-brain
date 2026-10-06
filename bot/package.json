@@ -1,7 +1,11 @@
 {
-  "name": "pet-brain-telegram-bot",
+  "name": "pet-telegram-bot",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Telegram → repo webhook for the pet-brain dog log. No dependencies — uses built-in fetch/Buffer."
+  "description": "Telegram → repo inbox webhook for Scout. No dependencies — uses built-in fetch/Buffer.",
+  "scripts": {
+    "test": "node --test functions/lib/*.test.mjs automations/*.test.mjs",
+    "eval": "node evals/run.mjs"
+  }
 }

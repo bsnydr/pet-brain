@@ -1,0 +1,52 @@
+# Manual only: test production defaults or compare up to three candidate role configurations.
+name: evals
+on:
+  workflow_dispatch:
+    inputs:
+      triage_model:
+        description: "Triage model (blank = production default)"
+        type: string
+        required: false
+      reply_model:
+        description: "Reply model (blank = production default)"
+        type: string
+        required: false
+      expert_model:
+        description: "Expert model (blank = production default)"
+        type: string
+        required: false
+      candidate_configs:
+        description: 'Optional JSON array of up to 3 objects with triage/reply/expert model ids'
+        type: string
+        default: '[]'
+        required: false
+permissions:
+  contents: read
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run candidate evals
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_PROVIDER: openai
+          OPENAI_MODEL_TRIAGE: ${{ inputs.triage_model || vars.OPENAI_MODEL_TRIAGE }}
+          OPENAI_MODEL_REPLY: ${{ inputs.reply_model || vars.OPENAI_MODEL_REPLY }}
+          OPENAI_MODEL_EXPERT: ${{ inputs.expert_model || vars.OPENAI_MODEL_EXPERT }}
+          EVAL_CONFIGS: ${{ inputs.candidate_configs }}
+        run: node evals/matrix.mjs
+      - name: Save comparison reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pet-model-evals
+          path: bot/eval-results/*.json
+          if-no-files-found: warn

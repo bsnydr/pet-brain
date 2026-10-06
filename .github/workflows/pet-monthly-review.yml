@@ -1,0 +1,49 @@
+# Restricted, zero-dependency OpenAI maintenance. File access is enforced by the runner;
+# the model has no shell/git/environment/network tool. Edits save only after a successful run.
+name: Scout · monthly product review
+
+on:
+  # Manual only. Enable schedules only in a private records repository.
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pet-repo-writes
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run monthly maintenance
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_PROVIDER: openai
+          OPENAI_MODEL_TRIAGE: ${{ vars.OPENAI_MODEL_TRIAGE }}
+          OPENAI_MODEL_REPLY: ${{ vars.OPENAI_MODEL_REPLY }}
+          OPENAI_MODEL_EXPERT: ${{ vars.OPENAI_MODEL_EXPERT }}
+        run: node bot/automations/run.mjs monthly
+
+      - name: Commit and push completed file edits
+        run: |
+          git config user.name "petbot"
+          git config user.email "petbot@users.noreply.github.com"
+          git add -- '*.md'
+          if git diff --cached --quiet; then
+            echo "No file edits to commit."
+            exit 0
+          fi
+          git commit -m "chore: monthly product review (OpenAI)"
+          git pull --rebase origin main
+          git push origin HEAD:main

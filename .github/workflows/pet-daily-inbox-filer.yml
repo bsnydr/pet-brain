@@ -1,0 +1,55 @@
+# Restricted, zero-dependency OpenAI maintenance. File access is enforced by the runner;
+# the model has no shell/git/environment/network tool. Edits save only after a successful run.
+name: Scout · daily inbox filer
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pet-repo-writes
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Skip an empty inbox before any API work
+        id: inbox
+        run: |
+          node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs"; const has=/^- \d{4}-\d{2}-\d{2}\b/m.test(readFileSync("telegram-inbox.md","utf8")); appendFileSync(process.env.GITHUB_OUTPUT, `has_captures=${has}\n`);'
+
+      - name: Run daily maintenance
+        if: steps.inbox.outputs.has_captures == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_PROVIDER: openai
+          OPENAI_MODEL_TRIAGE: ${{ vars.OPENAI_MODEL_TRIAGE }}
+          OPENAI_MODEL_REPLY: ${{ vars.OPENAI_MODEL_REPLY }}
+          OPENAI_MODEL_EXPERT: ${{ vars.OPENAI_MODEL_EXPERT }}
+        run: node bot/automations/run.mjs daily
+
+      - name: Commit and push completed file edits
+        if: steps.inbox.outputs.has_captures == 'true'
+        run: |
+          git config user.name "petbot"
+          git config user.email "petbot@users.noreply.github.com"
+          git add -- '*.md'
+          if git diff --cached --quiet; then
+            echo "No file edits to commit."
+            exit 0
+          fi
+          git commit -m "inbox: daily auto-file (OpenAI)"
+          git pull --rebase origin main
+          git push origin HEAD:main

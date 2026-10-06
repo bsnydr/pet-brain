@@ -1,6 +1,7 @@
 [build]
   publish = "public"
   functions = "functions"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- :/bot"
 
 [functions]
   node_bundler = "esbuild"

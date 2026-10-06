@@ -1,0 +1,26 @@
+# Runs the bot's unit tests on every change to bot/ — free (no API key), fast, catches code breakage.
+# Only fires when bot/ changes, so the bot's many daily inbox commits (which touch records, not code)
+# don't trigger pointless runs.
+name: tests
+
+on:
+  push:
+    paths: ["bot/**"]
+  pull_request:
+    paths: ["bot/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm test   # node --test — zero dependencies, so no install step needed
